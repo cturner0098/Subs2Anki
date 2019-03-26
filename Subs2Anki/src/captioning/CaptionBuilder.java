@@ -1,67 +1,41 @@
 package captioning;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 
 import org.xml.sax.SAXException;
 
 public class CaptionBuilder {
-	public CaptionBuilder(String lang, String videoID) throws IOException, SAXException {
-		buildFile(lang, videoID);
+	private static ArrayList<String> lines = new ArrayList<>();
+
+	public CaptionBuilder(String videoID, String lang) throws IOException, SAXException {
+		getCaptions(videoID, lang);
 	}
 
 	/**
-	 * Passes line from URL to parseString and outputs result into a text file
-	 * called captions.txt in split lines.
+	 * Passes line from URL to parseString and outputs result into an ArrayList
+	 * called lines.
 	 * 
 	 * @throws IOException
 	 * @throws SAXException
 	 */
-	public static void buildFile(String lang, String videoID) throws IOException, SAXException {
-		URL url;
-		InputStream is = null;
-		BufferedReader br;
-		BufferedWriter bw;
+	private static void getCaptions(String videoID, String lang) throws IOException, SAXException {
+		URL url = new URL("http://video.google.com/timedtext?lang=" + lang + "&v=" + videoID);
+		InputStream is = url.openStream();
+		BufferedReader br = new BufferedReader(new InputStreamReader(is));
 		String line;
 
-		try {
-			// Opens and reads from URL
-			url = new URL("http://video.google.com/timedtext?lang=" + lang + "&v=" + videoID);
-			is = url.openStream();
-			br = new BufferedReader(new InputStreamReader(is));
-			bw = new BufferedWriter(new FileWriter("captions-" + videoID + "-" + lang + ".txt"));
-			
-			// Writes lines from parseString to file
-			while ((line = br.readLine()) != null) {
-				bw.write(parseString(line));	
-			}
-			bw.close();
-		} catch (MalformedURLException mue) {
-			mue.printStackTrace();
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		} finally {
-			try {
-				if (is != null)
-					is.close();
-			} catch (IOException ioe) {
-				
-			}
+		System.out.println(url.toString());
+
+		// Adds lines from parseString to ArrayList lines
+		while ((line = br.readLine()) != null) {
+			lines.add(parseXML(line));
+			// System.out.println(parseString(line));
 		}
-		
-		// Proof of concept for reading a new line. Implement to sentence variable.
-		BufferedReader brt = new BufferedReader(new FileReader("captions-" + videoID + "-" + lang + ".txt"));
-		while (brt.readLine() != null) {
-			System.out.println(brt.readLine());
-		}
-		brt.close();
 	}
 
 	/**
@@ -71,21 +45,22 @@ public class CaptionBuilder {
 	 * @param textLine The line of text to search.
 	 * @return The formatted string by line.
 	 */
-	public static String parseString(String textLine) {
+	private static String parseXML(String textLine) {
 		String newString = "";
-		boolean newLine;
+		boolean newLine = false;
 		char ch = textLine.charAt(0);
 		for (int i = 0; i < textLine.length(); i++) {
 			if (ch == '<') {
 				for (int f = i; f < textLine.length() - 1; i++, f++) {
 					ch = textLine.charAt(i);
 					if (ch == '/') {
-						newLine=true;
+						newLine = true;
 					}
 					if (ch == '>') {
-						if(newLine=true) {
-							newString += "\n";
-							newLine=false;
+						if (newLine) {
+							newString += "\n"; // --removed because it messes with MeCab text parsing [RE ADDED MAYBE
+												// TEMPORARILY LOL IDK]
+							newLine = false;
 						}
 						i++;
 						break;
@@ -98,5 +73,9 @@ public class CaptionBuilder {
 			}
 		}
 		return newString;
+	}
+
+	public ArrayList<String> getLines() {
+		return lines;
 	}
 }
