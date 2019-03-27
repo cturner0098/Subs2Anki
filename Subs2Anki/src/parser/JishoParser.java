@@ -129,7 +129,14 @@ public class JishoParser implements Parser {
 		return commonObj.getBoolean("is_common");
 	}
 
-	public ArrayList<String> getCommon() {
+	public ArrayList<String> getCommonWords() {
 		return commonWords;
+	}
+	
+	public ArrayList<String> getCommonReadings() {
+		return commonReadings;
+	}
+	public ArrayList<String> getCommonMeanings() {
+		return commonMeanings;
 	}
 }
